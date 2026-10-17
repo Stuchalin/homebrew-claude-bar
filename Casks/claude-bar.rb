@@ -1,4 +1,4 @@
-cask "claudebar" do
+cask "claude-bar" do
   version "0.1.1"
   sha256 "242401cc5a1d5653aa7622b1c2e557548e15425454359b05d374d2e4d0546895"
 
@@ -12,6 +12,7 @@ cask "claudebar" do
     strategy :github_latest
   end
 
+  conflicts_with cask: "claudebar"
   depends_on macos: :sonoma
 
   app "ClaudeBar.app"

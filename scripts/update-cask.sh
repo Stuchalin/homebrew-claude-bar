@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Regenerates Casks/claudebar.rb from the latest ClaudeBar GitHub release.
+# Regenerates Casks/claude-bar.rb from the latest ClaudeBar GitHub release.
 #
 # Requires gh (authenticated locally, or GH_TOKEN in CI) and curl. On every run
 # it downloads the release zip and its .sha256 sidecar, verifies the zip against
-# the sidecar, renders the expected Cask and rewrites Casks/claudebar.rb only
+# the sidecar, renders the expected Cask and rewrites Casks/claude-bar.rb only
 # when the rendered content differs, so a drifted or manually broken Cask
 # repairs itself on the next run. Any failure exits non-zero before the Cask is
 # touched; the rewrite itself is an atomic rename within Casks/.
@@ -13,7 +13,7 @@ SOURCE_REPO="Stuchalin/claude-bar"
 TAG_RE='^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
 
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-cask="$root/Casks/claudebar.rb"
+cask="$root/Casks/claude-bar.rb"
 
 digest() {
   if command -v sha256sum >/dev/null 2>&1; then
@@ -58,9 +58,9 @@ if [[ "$actual" != "$expected" ]]; then
   exit 1
 fi
 
-rendered="$workdir/claudebar.rb"
+rendered="$workdir/claude-bar.rb"
 cat > "$rendered" <<RUBY
-cask "claudebar" do
+cask "claude-bar" do
   version "$version"
   sha256 "$expected"
 
@@ -74,6 +74,7 @@ cask "claudebar" do
     strategy :github_latest
   end
 
+  conflicts_with cask: "claudebar"
   depends_on macos: :sonoma
 
   app "ClaudeBar.app"
@@ -99,9 +100,9 @@ if cmp -s "$rendered" "$cask"; then
 fi
 
 # Stage next to the Cask so the final mv is a same-filesystem atomic rename.
-staged=$(mktemp "$root/Casks/.claudebar.rb.XXXXXX")
+staged=$(mktemp "$root/Casks/.claude-bar.rb.XXXXXX")
 cat "$rendered" > "$staged"
 chmod 644 "$staged"
 mv -f "$staged" "$cask"
 staged=""
-echo "regenerated Casks/claudebar.rb from $latest_tag"
+echo "regenerated Casks/claude-bar.rb from $latest_tag"

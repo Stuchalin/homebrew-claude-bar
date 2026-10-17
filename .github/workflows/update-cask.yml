@@ -21,13 +21,13 @@ jobs:
         run: scripts/update-cask.sh
       - name: Commit and push
         run: |
-          if git diff --quiet -- Casks/claudebar.rb; then
+          if git diff --quiet -- Casks/claude-bar.rb; then
             echo "cask is up to date, nothing to commit"
             exit 0
           fi
-          version=$(sed -n 's/^  version "\([0-9.]*\)"$/\1/p' Casks/claudebar.rb)
+          version=$(sed -n 's/^  version "\([0-9.]*\)"$/\1/p' Casks/claude-bar.rb)
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Casks/claudebar.rb
-          git commit -m "chore: sync cask with v$version"
+          git add Casks/claude-bar.rb
+          git commit -m "chore: sync claude-bar cask with v$version"
           git push

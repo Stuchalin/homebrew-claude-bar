@@ -76,7 +76,7 @@ reset_tap() {
   rm -rf "$tap"
   mkdir -p "$tap/scripts" "$tap/Casks"
   cp "$repo/scripts/update-cask.sh" "$tap/scripts/"
-  cp "$repo/Casks/claudebar.rb" "$tap/Casks/"
+  cp "$repo/Casks/claude-bar.rb" "$tap/Casks/"
 }
 
 pass=0 fail=0
@@ -92,14 +92,14 @@ run_updater() {
 expect_failure() {
   local name="$1" message="$2" before
   reset_tap
-  before=$(digest "$tap/Casks/claudebar.rb")
+  before=$(digest "$tap/Casks/claude-bar.rb")
   if run_updater; then
     not_ok "$name: expected non-zero exit"
   elif ! grep -qF -- "$message" "$tmp/out"; then
     not_ok "$name: output lacks '$message': $(cat "$tmp/out")"
-  elif [[ "$(digest "$tap/Casks/claudebar.rb")" != "$before" ]]; then
+  elif [[ "$(digest "$tap/Casks/claude-bar.rb")" != "$before" ]]; then
     not_ok "$name: cask changed"
-  elif [[ -n "$(find "$tap/Casks" -name '.claudebar.rb.*')" ]]; then
+  elif [[ -n "$(find "$tap/Casks" -name '.claude-bar.rb.*')" ]]; then
     not_ok "$name: staged file left behind"
   else
     ok "$name"
@@ -112,28 +112,36 @@ reset_tap
 new_sum=$(digest "$releases/v0.2.0/ClaudeBar-0.2.0.zip")
 sed -e 's/^  version "[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*"$/  version "0.2.0"/' \
     -e "s/^  sha256 \"[0-9a-f]\{64\}\"$/  sha256 \"$new_sum\"/" \
-    "$repo/Casks/claudebar.rb" > "$tmp/expected.rb"
-if STUB_TAG=v0.2.0 run_updater && cmp -s "$tap/Casks/claudebar.rb" "$tmp/expected.rb" \
+    "$repo/Casks/claude-bar.rb" > "$tmp/expected.rb"
+if STUB_TAG=v0.2.0 run_updater && cmp -s "$tap/Casks/claude-bar.rb" "$tmp/expected.rb" \
     && grep -q 'regenerated' "$tmp/out"; then
   ok "new release rewrites version and sha256 only"
 else
-  not_ok "new release rewrite"; diff "$tmp/expected.rb" "$tap/Casks/claudebar.rb" >&2 || true
+  not_ok "new release rewrite"; diff "$tmp/expected.rb" "$tap/Casks/claude-bar.rb" >&2 || true
+fi
+
+# --- rendered Cask keeps the renamed token and the conflict with "claudebar" --
+if grep -qx 'cask "claude-bar" do' "$tap/Casks/claude-bar.rb" \
+    && grep -qx '  conflicts_with cask: "claudebar"' "$tap/Casks/claude-bar.rb"; then
+  ok "rendered cask has token claude-bar and conflicts_with claudebar"
+else
+  not_ok "rendered cask token or conflicts_with line"
 fi
 
 # --- repeat run is a no-op ---------------------------------------------------
-before=$(digest "$tap/Casks/claudebar.rb")
-touch -t 200001010000 "$tap/Casks/claudebar.rb"
+before=$(digest "$tap/Casks/claude-bar.rb")
+touch -t 200001010000 "$tap/Casks/claude-bar.rb"
 if STUB_TAG=v0.2.0 run_updater && grep -q 'up to date' "$tmp/out" \
-    && [[ "$(digest "$tap/Casks/claudebar.rb")" == "$before" ]] \
-    && [[ -z "$(find "$tap/Casks/claudebar.rb" -newermt 2000-01-02)" ]]; then
+    && [[ "$(digest "$tap/Casks/claude-bar.rb")" == "$before" ]] \
+    && [[ -z "$(find "$tap/Casks/claude-bar.rb" -newermt 2000-01-02)" ]]; then
   ok "repeat run is a no-op"
 else
   not_ok "repeat run"
 fi
 
 # --- drifted Cask is repaired --------------------------------------------------
-echo "# stray" >> "$tap/Casks/claudebar.rb"
-if STUB_TAG=v0.2.0 run_updater && cmp -s "$tap/Casks/claudebar.rb" "$tmp/expected.rb"; then
+echo "# stray" >> "$tap/Casks/claude-bar.rb"
+if STUB_TAG=v0.2.0 run_updater && cmp -s "$tap/Casks/claude-bar.rb" "$tmp/expected.rb"; then
   ok "drifted cask is re-rendered"
 else
   not_ok "drifted cask repair"
@@ -185,9 +193,9 @@ STUB_TAG=v0.2.0 STUB_CURL_FAIL=1 expect_failure "curl network failure" "(6)"
 # --- optional: real release, committed Cask must be a no-op ------------------------------
 if [[ "${TEST_NETWORK:-}" == 1 ]]; then
   reset_tap
-  before=$(digest "$tap/Casks/claudebar.rb")
+  before=$(digest "$tap/Casks/claude-bar.rb")
   if "$tap/scripts/update-cask.sh" > "$tmp/out" 2>&1 && grep -q 'up to date' "$tmp/out" \
-      && [[ "$(digest "$tap/Casks/claudebar.rb")" == "$before" ]]; then
+      && [[ "$(digest "$tap/Casks/claude-bar.rb")" == "$before" ]]; then
     ok "network: committed cask matches the latest release"
   else
     not_ok "network: $(cat "$tmp/out")"
