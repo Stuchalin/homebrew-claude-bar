@@ -1,0 +1,33 @@
+name: Update cask
+
+on:
+  schedule:
+    - cron: '41 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: Update cask from latest release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Regenerate cask
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/update-cask.sh
+      - name: Commit and push
+        run: |
+          if git diff --quiet -- Casks/claudebar.rb; then
+            echo "cask is up to date, nothing to commit"
+            exit 0
+          fi
+          version=$(sed -n 's/^  version "\([0-9.]*\)"$/\1/p' Casks/claudebar.rb)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/claudebar.rb
+          git commit -m "chore: sync cask with v$version"
+          git push
